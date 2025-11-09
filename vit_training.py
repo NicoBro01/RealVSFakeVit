@@ -61,39 +61,41 @@ def train_epoch(model, train_loader, criterion, optimizer, device, epoch):
     running_loss = 0.0
     all_preds = []
     all_labels = []
-    
+
     # Progress bar
     pbar = tqdm(train_loader, desc=f'Epoch {epoch} [TRAIN]')
     
-    for batch_idx, (images, labels) in enumerate(pbar):
+    total_batches = len(train_loader) # Aggiunto per il calcolo della percentuale
+    
+    for batch_idx, (images, labels) in enumerate(pbar): # [1]
         images = images.to(device)
         labels = labels.to(device)
-        
+
         # Forward pass
         optimizer.zero_grad()
         outputs = model(images)
         loss = criterion(outputs, labels)
-        
+
         # Backward pass
         loss.backward()
         optimizer.step()
-        
+
         # Stats
         running_loss += loss.item()
         _, preds = torch.max(outputs, 1)
         all_preds.extend(preds.cpu().numpy())
         all_labels.extend(labels.cpu().numpy())
-        
-        # Updates the progress bar
-        pbar.set_postfix({'loss': f'{loss.item():.4f}'})
-    
+
+        if (batch_idx + 1) % 50 == 0:
+            print(f"Epoch {epoch} [TRAIN] - Iteration {batch_idx + 1}/{total_batches} | Current Loss: {loss.item():.4f}")
+
     # Compute metrics
     epoch_loss = running_loss / len(train_loader)
     accuracy = (np.array(all_preds) == np.array(all_labels)).mean()
     precision = precision_score(all_labels, all_preds, average='weighted', zero_division=0)
     recall = recall_score(all_labels, all_preds, average='weighted', zero_division=0)
     f1 = f1_score(all_labels, all_preds, average='weighted', zero_division=0)
-    
+
     return epoch_loss, accuracy, precision, recall, f1
 
 
@@ -107,9 +109,10 @@ def validate_epoch(model, val_loader, criterion, device, epoch):
     all_labels = []
     
     pbar = tqdm(val_loader, desc=f'Epoch {epoch} [VAL]')
+    total_batches = len(val_loader)
     
     with torch.no_grad():
-        for images, labels in pbar:
+        for batch_idx, (images, labels) in enumerate(pbar):
             images = images.to(device)
             labels = labels.to(device)
             
@@ -121,7 +124,8 @@ def validate_epoch(model, val_loader, criterion, device, epoch):
             all_preds.extend(preds.cpu().numpy())
             all_labels.extend(labels.cpu().numpy())
             
-            pbar.set_postfix({'loss': f'{loss.item():.4f}'})
+            if (batch_idx + 1) % 50 == 0:
+                print(f"Epoch {epoch} [VAL] - Iteration {batch_idx + 1}/{total_batches} | Current Loss: {loss.item():.4f}")
     
     # Compute metrics
     epoch_loss = running_loss / len(val_loader)

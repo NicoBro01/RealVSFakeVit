@@ -26,8 +26,8 @@ class Config:
     FREEZE_BACKBONE = False  # False for complete fine-tuning
     
     # Training
-    BATCH_SIZE = 16  # Reduce to 16 if there are GPU problems
-    NUM_EPOCHS = 20
+    BATCH_SIZE = 32  # Reduce to 16 if there are GPU problems
+    NUM_EPOCHS = 2
     LEARNING_RATE = 2e-5  # Usual Learning rate for fine-tuning
     WEIGHT_DECAY = 0.01
     VAL_SPLIT = 0.2  # 20% for validation
