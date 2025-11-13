@@ -23,7 +23,7 @@ class Config:
     # Model
     MODEL_NAME = "google/vit-base-patch16-224"  # Options: vit-base, vit-large, deit-base
     MODEL_TYPE = "fine_tune"  # Options: 'fine_tune', 'custom_head'
-    FREEZE_BACKBONE = False  # False for complete fine-tuning
+    FREEZE_BACKBONE = True  # False for complete fine-tuning, True for training only the classifier head
     
     # Training
     BATCH_SIZE = 32  # Reduce to 16 if there are GPU problems
@@ -109,7 +109,7 @@ def main():
         data_dir=Config.DATA_DIR,
         batch_size=Config.BATCH_SIZE,
         val_split=Config.VAL_SPLIT,
-        use_processor=True
+        use_processor=False
     )
     
     
