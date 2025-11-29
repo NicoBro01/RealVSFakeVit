@@ -99,7 +99,7 @@ def get_transforms(use_augmentation=True):
 
 
 # CREAZIONE DATALOADER
-def create_dataloaders(data_dir, batch_size=32, val_split=0.2, use_processor=True):
+def create_dataloaders(data_dir, batch_size=128, val_split=0.2, use_processor=True):
     """
     It creates DataLoader for training and validation
     
@@ -144,7 +144,7 @@ def create_dataloaders(data_dir, batch_size=32, val_split=0.2, use_processor=Tru
     print(f"   - Training set: {train_size} images")
     print(f"   - Validation set: {val_size} images")
 
-    BATCH_SIZE = 64      
+     
     NUM_WORKERS = 2      
     PIN_MEMORY = True
     PERSISTENT_WORKERS = True
@@ -153,7 +153,7 @@ def create_dataloaders(data_dir, batch_size=32, val_split=0.2, use_processor=Tru
     # Create DataLoaders
     train_loader = DataLoader(
     train_dataset,
-    batch_size=BATCH_SIZE,           
+    batch_size=batch_size,           
     shuffle=True,
     num_workers=NUM_WORKERS,         
     pin_memory=PIN_MEMORY,           
@@ -163,7 +163,7 @@ def create_dataloaders(data_dir, batch_size=32, val_split=0.2, use_processor=Tru
 
     val_loader = DataLoader(
     val_dataset,
-    batch_size=BATCH_SIZE,
+    batch_size=batch_size,
     shuffle=False,
     num_workers=NUM_WORKERS,
     pin_memory=PIN_MEMORY,
