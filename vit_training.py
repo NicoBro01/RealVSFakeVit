@@ -55,7 +55,7 @@ class EarlyStopping:
 
 
 # TRAINING EPOCH
-def train_epoch(model, train_loader, criterion, optimizer, device, epoch):
+def train_epoch(model, train_loader, criterion, optimizer, device, epoch, history):
     """Perform a training epoch."""
     model.train()
     running_loss = 0.0
@@ -86,8 +86,31 @@ def train_epoch(model, train_loader, criterion, optimizer, device, epoch):
         all_preds.extend(preds.cpu().numpy())
         all_labels.extend(labels.cpu().numpy())
 
-        if (batch_idx + 1) % 50 == 0:
-            print(f"Epoch {epoch} [TRAIN] - Iteration {batch_idx + 1}/{total_batches} | Current Loss: {loss.item():.4f}")
+        if (batch_idx + 1) % 100 == 0:
+            y_true = labels.cpu().numpy()
+            y_pred = preds.cpu().numpy()
+
+            batch_accuracy = (y_pred == y_true).mean()
+            batch_precision = precision_score(y_true, y_pred, average='weighted', zero_division=0)
+            batch_recall = recall_score(y_true, y_pred, average='weighted', zero_division=0)
+            batch_f1 = f1_score(y_true, y_pred, average='weighted', zero_division=0)
+
+            print(
+                f"Epoch {epoch} [TRAIN] - "
+                f"Iteration {batch_idx + 1}/{total_batches} | "
+                f"Loss: {loss.item():.4f} | "
+                f"Acc: {batch_accuracy:.4f} | "
+                f"Prec: {batch_precision:.4f} | "
+                f"Rec: {batch_recall:.4f} | "
+                f"F1: {batch_f1:.4f}"
+            )
+
+            # SAVE BATCH METRICS
+            history['train_batch_loss'].append(loss.item())
+            history['train_batch_acc'].append(batch_accuracy)
+            history['train_batch_prec'].append(batch_precision)
+            history['train_batch_rec'].append(batch_recall)
+            history['train_batch_f1'].append(batch_f1)
 
     # Compute metrics
     epoch_loss = running_loss / len(train_loader)
@@ -101,7 +124,7 @@ def train_epoch(model, train_loader, criterion, optimizer, device, epoch):
 
 
 # VALIDATION EPOCH
-def validate_epoch(model, val_loader, criterion, device, epoch):
+def validate_epoch(model, val_loader, criterion, device, epoch, history):
     """Permorm a validation epoch."""
     model.eval()
     running_loss = 0.0
@@ -124,8 +147,31 @@ def validate_epoch(model, val_loader, criterion, device, epoch):
             all_preds.extend(preds.cpu().numpy())
             all_labels.extend(labels.cpu().numpy())
             
-            if (batch_idx + 1) % 50 == 0:
-                print(f"Epoch {epoch} [VAL] - Iteration {batch_idx + 1}/{total_batches} | Current Loss: {loss.item():.4f}")
+            if (batch_idx + 1) % 100 == 0:
+                y_true = labels.cpu().numpy()
+                y_pred = preds.cpu().numpy()
+
+                batch_accuracy = (y_pred == y_true).mean()
+                batch_precision = precision_score(y_true, y_pred, average='weighted', zero_division=0)
+                batch_recall = recall_score(y_true, y_pred, average='weighted', zero_division=0)
+                batch_f1 = f1_score(y_true, y_pred, average='weighted', zero_division=0)
+
+                print(
+                    f"Epoch {epoch} [VAL] - "
+                    f"Iteration {batch_idx + 1}/{total_batches} | "
+                    f"Loss: {loss.item():.4f} | "
+                    f"Acc: {batch_accuracy:.4f} | "
+                    f"Prec: {batch_precision:.4f} | "
+                    f"Rec: {batch_recall:.4f} | "
+                    f"F1: {batch_f1:.4f}"
+                )
+
+                # SAVE BATCH METRICS
+                history['val_batch_loss'].append(loss.item())
+                history['val_batch_acc'].append(batch_accuracy)
+                history['val_batch_prec'].append(batch_precision)
+                history['val_batch_rec'].append(batch_recall)
+                history['val_batch_f1'].append(batch_f1)
     
     # Compute metrics
     epoch_loss = running_loss / len(val_loader)
@@ -207,8 +253,12 @@ def train_model(
     # History to monitor metrics
     history = {
         'train_loss': [], 'train_acc': [], 'train_precision': [], 'train_recall': [], 'train_f1': [],
-        'val_loss': [], 'val_acc': [], 'val_precision': [], 'val_recall': [], 'val_f1': []
+        'val_loss': [], 'val_acc': [], 'val_precision': [], 'val_recall': [], 'val_f1': [],
+        
+        'train_batch_loss': [], 'train_batch_acc': [], 'train_batch_prec': [], 'train_batch_rec': [], 'train_batch_f1': [],
+        'val_batch_loss': [], 'val_batch_acc': [], 'val_batch_prec': [], 'val_batch_rec': [], 'val_batch_f1': []
     }
+
     
     best_val_loss = float('inf')
     total_start_time = time.time()
@@ -219,12 +269,13 @@ def train_model(
         
         # Training
         train_loss, train_acc, train_prec, train_rec, train_f1 = train_epoch(
-            model, train_loader, criterion, optimizer, device, epoch
+            model, train_loader, criterion, optimizer, device, epoch, history
         )
+        
         
         # Validation
         val_loss, val_acc, val_prec, val_rec, val_f1, cm = validate_epoch(
-            model, val_loader, criterion, device, epoch
+            model, val_loader, criterion, device, epoch, history
         )
         
         # Update scheduler
@@ -318,3 +369,59 @@ def plot_training_history(history, save_path='training_curves.png'):
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
     print(f"Charts saved here: {save_path}")
     plt.show()
+
+def plot_batch_history(history, save_path='batch_metrics.png'):
+    """
+    Plot batch-level metrics (loss, accuracy, precision, recall, F1)
+    collected during training and validation.
+    """
+
+    metrics = [
+        ('loss', 'Loss'),
+        ('acc', 'Accuracy'),
+        ('prec', 'Precision'),
+        ('rec', 'Recall'),
+        ('f1', 'F1-Score')
+    ]
+
+    fig, axes = plt.subplots(3, 2, figsize=(16, 18))
+    axes = axes.flatten()
+
+    for idx, (key, title) in enumerate(metrics):
+        ax = axes[idx]
+
+        # TRAIN batches
+        ax.plot(
+            history[f'train_batch_{key}'],
+            label='Train (batch-wise)',
+            linewidth=1,
+            marker='o',
+            markersize=3,
+            alpha=0.8
+        )
+
+        # VALIDATION batches
+        ax.plot(
+            history[f'val_batch_{key}'],
+            label='Validation (batch-wise)',
+            linewidth=1,
+            marker='s',
+            markersize=3,
+            alpha=0.8
+        )
+
+        ax.set_title(f'{title} per Batch')
+        ax.set_xlabel('Batch step (# every 50 batches)')
+        ax.set_ylabel(title)
+        ax.grid(True, alpha=0.3)
+        ax.legend()
+
+    # Hide last empty plot if metrics < grid cells
+    if len(metrics) < len(axes):
+        axes[-1].axis('off')
+
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    plt.show()
+
+    print(f"Batch metrics chart saved at: {save_path}")

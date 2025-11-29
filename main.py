@@ -7,7 +7,7 @@ from pathlib import Path
 
 from vit_dataloader import create_dataloaders
 from vit_model import create_model
-from vit_training import train_model, plot_training_history
+from vit_training import train_model, plot_training_history, plot_batch_history
 from vit_evaluation import load_model, evaluate_model
 
 torch.set_float32_matmul_precision('high')
@@ -147,7 +147,12 @@ def main():
     # Plot training curves
     plot_training_history(
         history, 
-        save_path=os.path.join(Config.SAVE_DIR, 'training_curves.png')
+        save_path=os.path.join(Config.SAVE_DIR, 'epoch_training_curves.png')
+    )
+
+    plot_batch_history(
+        history, 
+        save_path=os.path.join(Config.SAVE_DIR, 'batch_training_curves.png')
     )
 
     
