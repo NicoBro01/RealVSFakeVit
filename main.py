@@ -26,7 +26,7 @@ class Config:
     FREEZE_BACKBONE = True  # False for complete fine-tuning, True for training only the classifier head
     
     # Training
-    BATCH_SIZE = 32  # Reduce to 16 if there are GPU problems
+    BATCH_SIZE = 64  # Reduce to 16 if there are GPU problems
     NUM_EPOCHS = 2
     LEARNING_RATE = 2e-5  # Usual Learning rate for fine-tuning
     WEIGHT_DECAY = 0.01
@@ -36,7 +36,7 @@ class Config:
     PATIENCE = 5  # Number of epochs without improvement before stopping
     
     # Hardware
-    NUM_WORKERS = 4  # Threads for DataLoader (to adapt based on CPU)
+    NUM_WORKERS = 2  # Threads for DataLoader (to adapt based on CPU)
     
     # Random Seed
     SEED = 42

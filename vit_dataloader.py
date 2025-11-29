@@ -143,22 +143,32 @@ def create_dataloaders(data_dir, batch_size=32, val_split=0.2, use_processor=Tru
     print(f"\nSplit of data:")
     print(f"   - Training set: {train_size} images")
     print(f"   - Validation set: {val_size} images")
+
+    BATCH_SIZE = 64      
+    NUM_WORKERS = 2      
+    PIN_MEMORY = True
+    PERSISTENT_WORKERS = True
+    PREFETCH_FACTOR = 2 
     
     # Create DataLoaders
     train_loader = DataLoader(
-        train_dataset,
-        batch_size=batch_size,
-        shuffle=True,
-        num_workers=4,
-        pin_memory=True if torch.cuda.is_available() else False
+    train_dataset,
+    batch_size=BATCH_SIZE,           
+    shuffle=True,
+    num_workers=NUM_WORKERS,         
+    pin_memory=PIN_MEMORY,           
+    persistent_workers=PERSISTENT_WORKERS,  
+    prefetch_factor=PREFETCH_FACTOR  
     )
-    
+
     val_loader = DataLoader(
-        val_dataset,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=4,
-        pin_memory=True if torch.cuda.is_available() else False
+    val_dataset,
+    batch_size=BATCH_SIZE,
+    shuffle=False,
+    num_workers=NUM_WORKERS,
+    pin_memory=PIN_MEMORY,
+    persistent_workers=PERSISTENT_WORKERS,
+    prefetch_factor=PREFETCH_FACTOR
     )
     
-    return train_loader, val_loader, 2  # num_classes = 2 (REAL, FAKE)
+    return train_loader, val_loader, 2
